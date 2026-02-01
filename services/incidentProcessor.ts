@@ -2,6 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { IncidentData, AnalysisResult } from '../types';
 import { LEGAL_FRAMEWORK, SEV_PROTOCOLS } from '../constants';
 
+// 1. Inicializamos la IA con la librería NUEVA (@google/genai)
+// Usamos process.env.API_KEY porque lo definimos en vite.config.ts
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeIncident = async (data: IncidentData): Promise<AnalysisResult> => {
@@ -56,8 +58,11 @@ export const analyzeIncident = async (data: IncidentData): Promise<AnalysisResul
   `;
 
   try {
+    // 2. Llamada con la sintaxis NUEVA (ai.models.generateContent)
+    // Usamos gemini-2.5-flash-preview o gemini-1.5-flash-latest según disponibilidad,
+    // pero para compatibilidad con las instrucciones usamos gemini-2.5-flash-preview
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-flash-preview", 
       contents: userPrompt,
       config: {
         systemInstruction: systemInstruction,
