@@ -5,13 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   // Carga las variables de entorno desde process.env (Render) o .env (Local)
   const env = loadEnv(mode, (process as any).cwd(), '');
-  
+
   return {
     plugins: [react()],
     define: {
-      // Esto es CRUCIAL: Reemplaza 'process.env.API_KEY' en tu código 
+      // Esto es CRUCIAL: Reemplaza 'process.env.DEEPSEEK_API_KEY' en tu código 
       // con el valor real de la variable de entorno durante el "Build"
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      'process.env.DEEPSEEK_API_KEY': JSON.stringify(env.DEEPSEEK_API_KEY)
     }
   }
 })

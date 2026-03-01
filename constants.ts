@@ -1,5 +1,13 @@
 import { RiskLevel, ActionStep, LegalReference } from './types';
 
+export const MEXICO_STATES = [
+  "Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas",
+  "Chihuahua", "Ciudad de México", "Coahuila", "Colima", "Durango", "Estado de México",
+  "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Michoacán", "Morelos", "Nayarit",
+  "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí",
+  "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas"
+];
+
 // Base normativa completa para referencia (Base de Conocimiento del Sistema)
 export const LEGAL_FRAMEWORK = {
   // --- NIVEL CONSTITUCIONAL Y SUPREMO ---
@@ -142,22 +150,22 @@ export const SEV_PROTOCOLS = {
   NEGLIGENCIA: {
     name: 'Negligencia / Omisión de Cuidados',
     consideredDocs: [
-        LEGAL_FRAMEWORK.LGDNNA,
-        LEGAL_FRAMEWORK.L573,
-        LEGAL_FRAMEWORK.RAPF,
-        LEGAL_FRAMEWORK.CONST
+      LEGAL_FRAMEWORK.LGDNNA,
+      LEGAL_FRAMEWORK.L573,
+      LEGAL_FRAMEWORK.RAPF,
+      LEGAL_FRAMEWORK.CONST
     ],
     legal: [
-        {
-            document: LEGAL_FRAMEWORK.LGDNNA,
-            article: 'Art. 103',
-            description: 'Obligaciones de quienes ejercen la patria potestad, tutela o guarda y custodia.'
-        },
-        {
-            document: LEGAL_FRAMEWORK.RAPF,
-            article: 'Obligaciones',
-            description: 'Deber de los padres de colaborar con las autoridades escolares y vigilar la conducta de sus hijos.'
-        }
+      {
+        document: LEGAL_FRAMEWORK.LGDNNA,
+        article: 'Art. 103',
+        description: 'Obligaciones de quienes ejercen la patria potestad, tutela o guarda y custodia.'
+      },
+      {
+        document: LEGAL_FRAMEWORK.RAPF,
+        article: 'Obligaciones',
+        description: 'Deber de los padres de colaborar con las autoridades escolares y vigilar la conducta de sus hijos.'
+      }
     ]
   },
   LEVE: {

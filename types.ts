@@ -27,6 +27,7 @@ export interface IncidentData {
   location: LocationType;
   date: string;
   time: string;
+  state: string;
   description: string;
   involvedPersons: string;
 }

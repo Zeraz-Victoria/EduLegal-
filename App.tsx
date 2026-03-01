@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IncidentForm } from './components/IncidentForm';
 import { ActionPlan } from './components/ActionPlan';
 import { DocumentGenerator } from './components/DocumentGenerator';
@@ -8,12 +8,40 @@ import { analyzeIncident } from './services/incidentProcessor';
 import { Scale, AlertTriangle, FileText, ArrowLeft, ShieldCheck, Loader2, Sparkles } from 'lucide-react';
 
 function App() {
-  const [incidentData, setIncidentData] = useState<IncidentData | null>(null);
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [activeTab, setActiveTab] = useState<'guia' | 'docs' | 'legal'>('guia');
+  // Cargar estado inicial desde LocalStorage
+  const [incidentData, setIncidentData] = useState<IncidentData | null>(() => {
+    const saved = localStorage.getItem('edulegal_incident');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(() => {
+    const saved = localStorage.getItem('edulegal_analysis');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [activeTab, setActiveTab] = useState<'guia' | 'docs' | 'legal'>(() => {
+    return (localStorage.getItem('edulegal_tab') as any) || 'guia';
+  });
+
   const [isLoading, setIsLoading] = useState(false);
 
+  // Guardar en LocalStorage cuando cambie el estado
+  useEffect(() => {
+    if (incidentData) localStorage.setItem('edulegal_incident', JSON.stringify(incidentData));
+    else localStorage.removeItem('edulegal_incident');
+  }, [incidentData]);
+
+  useEffect(() => {
+    if (analysis) localStorage.setItem('edulegal_analysis', JSON.stringify(analysis));
+    else localStorage.removeItem('edulegal_analysis');
+  }, [analysis]);
+
+  useEffect(() => {
+    localStorage.setItem('edulegal_tab', activeTab);
+  }, [activeTab]);
+
   const handleIncidentSubmit = async (data: IncidentData) => {
+    localStorage.setItem('pending_state', data.state);
     setIsLoading(true);
     try {
       const result = await analyzeIncident(data);
@@ -32,7 +60,10 @@ function App() {
     setIncidentData(null);
     setAnalysis(null);
     setActiveTab('guia');
+    localStorage.clear();
   };
+
+  const selectedState = incidentData?.state || "GENERAL";
 
   const getRiskColor = (risk: RiskLevel) => {
     switch (risk) {
@@ -53,11 +84,13 @@ function App() {
             </div>
             <div>
               <h1 className="font-bold text-slate-800 leading-tight">EduLegal</h1>
-              <p className="text-[10px] text-green-600 font-medium tracking-wide">ASISTENTE SEV / LEY 303</p>
+              <p className="text-[10px] text-green-600 font-bold uppercase tracking-widest">
+                ASISTENTE LEGAL / {selectedState}
+              </p>
             </div>
           </div>
           {incidentData && !isLoading && (
-            <button 
+            <button
               onClick={handleReset}
               className="text-sm text-slate-500 hover:text-green-700 font-medium flex items-center gap-1"
             >
@@ -76,9 +109,9 @@ function App() {
                 <Loader2 size={48} className="text-green-600 animate-spin" />
               </div>
             </div>
-            <h3 className="mt-8 text-xl font-bold text-slate-800">Analizando Incidente...</h3>
+            <h3 className="mt-8 text-xl font-bold text-slate-800 text-center">Analizando Incidente...</h3>
             <p className="text-slate-500 mt-2 text-center max-w-md">
-              Consultando Protocolos SEV, Ley 303 y Ley General de NNA para determinar la ruta de actuación más segura.
+              Consultando protocolos de {localStorage.getItem('pending_state') || 'tu entidad'} y normativa federal para determinar la ruta de actuación más segura.
             </p>
           </div>
         ) : !incidentData || !analysis ? (
@@ -89,21 +122,21 @@ function App() {
                 <Sparkles size={12} /> IMPULSADO POR IA JURÍDICA
               </div>
               <h2 className="text-3xl font-bold text-slate-800 mb-3">Reporte de Incidente Escolar</h2>
-              <p className="text-slate-600">Completa el formulario para recibir un análisis legal inteligente y la documentación oficial basada en los protocolos vigentes de Veracruz.</p>
+              <p className="text-slate-600">Completa el formulario para recibir un análisis legal inteligente basado en los protocolos vigentes de tu entidad federativa.</p>
             </div>
             <IncidentForm onSubmit={handleIncidentSubmit} />
           </div>
         ) : (
           /* Results Dashboard */
           <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
-            
+
             {/* Classification Banner */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <p className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-1">Diagnóstico IA</p>
+                <p className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-1">Diagnóstico IA en {selectedState}</p>
                 <h2 className="text-2xl font-bold text-slate-800">{analysis.classification}</h2>
               </div>
-              
+
               <div className={`px-5 py-3 rounded-xl border ${getRiskColor(analysis.riskLevel)} flex items-center gap-3`}>
                 <AlertTriangle size={24} />
                 <div>
@@ -115,19 +148,19 @@ function App() {
 
             {/* Navigation Tabs */}
             <div className="flex overflow-x-auto pb-2 gap-2 border-b border-slate-200">
-              <button 
+              <button
                 onClick={() => setActiveTab('guia')}
                 className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-medium transition-colors whitespace-nowrap ${activeTab === 'guia' ? 'bg-white text-green-700 border-x border-t border-slate-200 shadow-sm relative top-px' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
               >
                 <ShieldCheck size={18} /> Guía de Actuación
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('docs')}
                 className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-medium transition-colors whitespace-nowrap ${activeTab === 'docs' ? 'bg-white text-green-700 border-x border-t border-slate-200 shadow-sm relative top-px' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
               >
                 <FileText size={18} /> Documentos Legales
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('legal')}
                 className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-medium transition-colors whitespace-nowrap ${activeTab === 'legal' ? 'bg-white text-green-700 border-x border-t border-slate-200 shadow-sm relative top-px' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
               >

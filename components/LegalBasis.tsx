@@ -8,18 +8,32 @@ interface Props {
 }
 
 export const LegalBasis: React.FC<Props> = ({ analysis }) => {
+  const selectedState = analysis.consideredDocuments[0] || "General";
+
+  // Filtrar la base de conocimiento para mostrar solo lo relevante
+  const filteredFramework = Object.entries(LEGAL_FRAMEWORK).filter(([key, name]) => {
+    // Siempre mostrar leyes federales (no tienen prefijo de estado específico en su mayoría, 
+    // pero podemos basarnos en si contienen "Veracruz" o no para este prototipo)
+    const isVeracruz = name.includes('Veracruz') || key === 'L303' || key === 'LEEV' || key === 'L573' || key === 'CPV' || key === 'PROTOCOLO_SEV';
+
+    if (selectedState === 'Veracruz') return true;
+
+    // Si es otro estado, solo mostramos las que NO sean de Veracruz (asumimos federales)
+    return !isVeracruz;
+  });
+
   return (
     <div className="space-y-6">
-      
+
       {/* Sección de Normativa Considerada para este caso */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-           <h3 className="text-slate-800 font-bold flex items-center gap-2">
-            <FileCheck size={20} className="text-blue-600" /> 
+          <h3 className="text-slate-800 font-bold flex items-center gap-2">
+            <FileCheck size={20} className="text-blue-600" />
             Normativa Aplicada al Caso
           </h3>
           <p className="text-sm text-slate-500 mt-1">
-            El sistema ha seleccionado el siguiente marco jurídico basándose en la tipología del incidente:
+            El sistema ha seleccionado el siguiente marco jurídico de {selectedState} y Federal:
           </p>
         </div>
         <div className="p-6">
@@ -55,32 +69,32 @@ export const LegalBasis: React.FC<Props> = ({ analysis }) => {
         </div>
       </div>
 
-      {/* Base de Datos Completa */}
+      {/* Base de Datos Completa Filtrada */}
       <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden mt-8 opacity-90 hover:opacity-100 transition-opacity">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-100/50">
           <h3 className="text-slate-700 font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
-            <Library size={18} /> 
-            Base de Conocimiento Legal del Sistema
+            <Library size={18} />
+            Acervo Normativo: {selectedState} / Federal
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Inventario completo de leyes y protocolos disponibles para el análisis de IA:
+            Leyes y protocolos disponibles para consulta en este estado:
           </p>
         </div>
         <div className="p-6">
-            <div className="grid grid-cols-1 gap-2">
-                {Object.entries(LEGAL_FRAMEWORK).map(([key, name]) => (
-                    <div key={key} className="flex items-start gap-3 text-xs md:text-sm text-slate-500 p-2 hover:bg-white hover:text-slate-800 rounded border border-transparent hover:border-slate-200 transition-colors">
-                        <span className="font-mono font-bold text-slate-400 min-w-[60px] text-right">{key}</span> 
-                        <span className="font-medium">{name}</span>
-                    </div>
-                ))}
-            </div>
+          <div className="grid grid-cols-1 gap-2">
+            {filteredFramework.map(([key, name]) => (
+              <div key={key} className="flex items-start gap-3 text-xs md:text-sm text-slate-500 p-2 hover:bg-white hover:text-slate-800 rounded border border-transparent hover:border-slate-200 transition-colors">
+                <span className="font-mono font-bold text-slate-400 min-w-[60px] text-right">{key}</span>
+                <span className="font-medium">{name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-      
+
       <div className="text-xs text-slate-400 p-4 text-center border-t border-slate-100 mt-4">
-        Nota: Este análisis automatizado utiliza la normativa vigente del Estado de Veracruz y Federal. 
-        Para efectos legales vinculantes, consulte siempre la versión oficial del Diario Oficial de la Federación y la Gaceta Oficial del Estado.
+        Nota: Este análisis utiliza la normativa vigente de {selectedState === 'Veracruz' ? 'el Estado de Veracruz' : selectedState} y Federal.
+        Para efectos legales vinculantes, consulte el Diario Oficial de la Federación y la Gaceta Oficial correspondiente.
       </div>
     </div>
   );

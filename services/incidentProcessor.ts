@@ -1,55 +1,92 @@
-import { GoogleGenAI } from "@google/genai";
-import { IncidentData, AnalysisResult } from '../types';
+import OpenAI from "openai";
+import { IncidentData, AnalysisResult, RiskLevel } from '../types';
 import { LEGAL_FRAMEWORK, SEV_PROTOCOLS } from '../constants';
 
-// 1. Inicializamos la IA con la librería NUEVA (@google/genai)
-// Usamos process.env.API_KEY porque lo definimos en vite.config.ts
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Inicializamos el cliente de DeepSeek (usando el SDK de OpenAI)
+const client = new OpenAI({
+  apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com",
+  dangerouslyAllowBrowser: true // Necesario para llamar desde el navegador en desarrollo
+});
 
 export const analyzeIncident = async (data: IncidentData): Promise<AnalysisResult> => {
+  // Configuración dinámica por estado
+  const SELECTED_STATE = data.state;
+  // Solo tenemos fragmentos específicos para Veracruz por ahora
+  const HAS_LOCAL_PROTOCOLS = SELECTED_STATE === 'Veracruz';
+
+  const STATE_LEGAL_SNIPPETS = HAS_LOCAL_PROTOCOLS
+    ? JSON.stringify(LEGAL_FRAMEWORK) + "\n" + JSON.stringify(SEV_PROTOCOLS)
+    : "No hay protocolos específicos para este estado en la base local.";
+
+  const FEDERAL_LEGAL_BASE = "Ley General de Educación (Arts. 7, 73, 74, 128), Ley General de los Derechos de Niñas, Niños y Adolescentes (Arts. 46, 47, 103, 105), Protocolos de Convivencia Escolar SEP (Federal).";
+
   const systemInstruction = `
-    Eres un Abogado Experto en Derecho Educativo y Protocolos de Seguridad Escolar del Estado de Veracruz.
+    # PERFIL: NÚCLEO LEGAL EDUCATIVO MÉXICO (ANTIGRAVITY)
+    Eres un motor experto en Derecho Educativo Mexicano de alta precisión. Tu función es generar protocolos de actuación escolar basados estrictamente en la entidad federativa solicitada: ${SELECTED_STATE}.
 
-    # REGLA DE ORO (STRICT GROUNDING)
-    Tienes PROHIBIDO usar conocimiento general externo para definir los protocolos.
-    Toda recomendación, paso a paso o clasificación DEBE provenir EXCLUSIVAMENTE de los documentos provistos en la BASE DE CONOCIMIENTO a continuación.
+    # JERARQUÍA DE FUENTES (ESTRICTA)
+    1. **Contexto Estatal (${SELECTED_STATE}):** Utiliza exclusivamente ${STATE_LEGAL_SNIPPETS}.
+    2. **Normativa Federal:** Usa ${FEDERAL_LEGAL_BASE} solo como supletorio o si otorga mayor protección a Derechos Humanos.
 
-    BASE DE CONOCIMIENTO (DOCUMENTOS VIGENTES):
-    ${JSON.stringify(LEGAL_FRAMEWORK)}
-    ${JSON.stringify(SEV_PROTOCOLS)}
+    # REGLA DE EXCLUSIVIDAD Y PRECISIÓN
+    - No inventes artículos ni cites leyes de estados distintos a ${SELECTED_STATE}. 
+    - Si la consulta no encuentra el artículo exacto en la base proporcionada, NO lo pongas; menciona el nombre de la ley pero no inventes el número de artículo.
 
-    PROCESO MENTAL OBLIGATORIO:
-    1. Buscar palabras clave en los documentos de la BASE DE CONOCIMIENTO.
-    2. Encontrar la sección exacta (ej. "Protocolo de Acoso Escolar", "Ley 303 Art. 12").
-    3. Extraer los pasos literalmente de las descripciones provistas.
-    
-    Si la información no está en los documentos, omite el paso en lugar de inventar una solución genérica.
+    # DIRECTORIO DE AUTORIDADES DE PROTECCIÓN (USO OBLIGATORIO)
+    Toda mención a la autoridad de protección de NNA en ${SELECTED_STATE} DEBE usar exactamente el nombre registrado en este directorio:
+    - Aguascalientes: Procuraduría de Protección de Derechos de NNA del Estado de Aguascalientes
+    - Baja California: Procuraduría para la Defensa de los Menores y la Familia de BC
+    - Baja California Sur: Procuraduría de Protección de NNA de BCS
+    - Campeche: Procuraduría de Protección de NNA del Estado de Campeche
+    - Chiapas: Procuraduría de Protección de NNA del Estado de Chiapas
+    - Chihuahua: Procuraduría de Protección de NNA del Estado de Chihuahua
+    - Ciudad de México: Procuraduría de Protección de los Derechos de NNA de la CDMX
+    - Coahuila: Procuraduría para Niños, Niñas y la Familia (PRONNIF)
+    - Colima: Procuraduría de Protección de NNA del Estado de Colima
+    - Durango: Procuraduría de Protección de NNA del Estado de Durango
+    - Estado de México: Procuraduría de Protección de NNA del Estado de México
+    - Guanajuato: Procuraduría de Protección de NNA del Estado de Guanajuato
+    - Guerrero: Procuraduría de Protección de los Derechos de las NNA de Guerrero
+    - Hidalgo: Procuraduría de Protección de NNA del Estado de Hidalgo
+    - Jalisco: Procuraduría de Protección de NNA del Estado de Jalisco (PPNNA)
+    - Michoacán: Procuraduría de Protección de NNA del Estado de Michoacán
+    - Morelos: Procuraduría de Protección de NNA del Estado de Morelos
+    - Nayarit: Procuraduría de Protección de NNA del Estado de Nayarit
+    - Nuevo León: Procuraduría de Protección de NNA del Estado de Nuevo León
+    - Oaxaca: Procuraduría de Protección de los Derechos de NNA de Oaxaca
+    - Puebla: Procuraduría de Protección de los Derechos de NNA de Puebla
+    - Querétaro: Procuraduría de Protección de NNA del Estado de Querétaro
+    - Quintana Roo: Procuraduría de Protección de NNA de Quintana Roo
+    - San Luis Potosí: Procuraduría de Protección de NNA (PPNNA) de SLP
+    - Sinaloa: Procuraduría de Protección de NNA del Estado de Sinaloa
+    - Sonora: Procuraduría de Protección de NNA del Estado de Sonora
+    - Tabasco: Procuraduría de Protección de la Familia y de los Derechos de las NNA de Tabasco
+    - Tamaulipas: Procuraduría de Protección a NNA y la Familia de Tamaulipas
+    - Tlaxcala: Procuraduría para la Protección de NNA del Estado de Tlaxcala
+    - Veracruz: Procuraduría Estatal de Protección de NNA de Veracruz
+    - Yucatán: Procuraduría de Protección de NNA del Estado de Yucatán (PRODENNA)
+    - Zacatecas: Procuraduría de Protección a NNA y Familia de Zacatecas
 
-    # GENERACIÓN DE MEDIDAS Y ACUERDOS
-    - "disciplinaryMeasures": Debes sugerir medidas formativas (sanciones) basadas en la proporcionalidad (Ley 303 y Marcos de Convivencia). Ej: "Suspensión de actividades extraescolares", "Servicio comunitario escolar", "Exhorto verbal". Si es delito, la medida es "Suspensión precautoria mientras investiga la autoridad".
-    - "finalAgreements": Redacta compromisos específicos para el Acta en primera persona del plural o singular según corresponda al padre/tutor/alumno. Ej: "Me comprometo a vigilar la asistencia...", "Me comprometo a asistir a terapia psicológica...".
+    # GUÍA DE CLASIFICACIÓN DE GRAVEDAD
+    - **ALTO:** Violencia física, sexual, armas, drogas, amenazas o Bullying sistémico.
+    - **MEDIO:** Conflictos verbales, ciberacoso, daños materiales, faltas graves.
+    - **BAJO:** Faltas administrativas menores.
 
-    # REQUISITO DE CITAS
-    En cada paso del "actionPlan" (Guía de Actuación), DEBES poner entre paréntesis la fuente exacta.
-    Ejemplo: "Notificar al Supervisor Escolar (Ref: Protocolo SEV, Apartado Acoso)".
-    Si no puedes citar la fuente basándote estrictamente en el texto provisto, NO incluyas el paso.
-
-    FORMATO JSON ESPERADO:
+    # FORMATO DE SALIDA (JSON ESTRICTO)
     {
-      "classification": string,
-      "riskLevel": "Bajo" | "Medio" | "Alto",
-      "actionPlan": [{ "role": string, "actions": string[] }],
-      "legalBasis": [{ "document": string, "article": string, "description": string }],
-      "requiredDocuments": string[],
-      "consideredDocuments": string[],
-      "canalizationBody": string | null,
-      "disciplinaryMeasures": string[],
-      "finalAgreements": string[]
+      "entidad": "${SELECTED_STATE}",
+      "class": "Tipo específico de incidente",
+      "risk": "Bajo|Medio|Alto",
+      "plan": [{"role": "Rol responsable", "actions": ["Acción + (Doc: [Nombre], Art: [N°])"]}],
+      "base": [{"doc": "Nombre completo del documento", "art": "N° de artículo", "desc": "Resumen del fundamento"}],
+      "measures": ["Medidas formativas"],
+      "agreements": ["Compromisos para el acta"]
     }
   `;
 
   const userPrompt = `
-    INCIDENTE A ANALIZAR BAJO PROTOCOLO ESTRICTO:
+    INCIDENTE A ANALIZAR (ESTADO: ${SELECTED_STATE}):
     - Reporta: ${data.reporter}
     - Lugar: ${data.location}
     - Fecha: ${data.date} ${data.time}
@@ -58,28 +95,47 @@ export const analyzeIncident = async (data: IncidentData): Promise<AnalysisResul
   `;
 
   try {
-    // 2. Llamada con la sintaxis NUEVA (ai.models.generateContent)
-    // Usamos gemini-2.5-flash-preview o gemini-1.5-flash-latest según disponibilidad,
-    // pero para compatibilidad con las instrucciones usamos gemini-2.5-flash-preview
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview", 
-      contents: userPrompt,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: "application/json",
-        temperature: 0.2 // Reduced temperature for stricter adherence to context
-      }
+    const response = await client.chat.completions.create({
+      model: "deepseek-chat",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      top_p: 1.0
     });
 
-    let text = response.text;
-    if (!text) throw new Error("La IA no devolvió contenido.");
+    const text = response.choices[0].message.content;
+    if (!text) throw new Error("DeepSeek no devolvió contenido.");
 
-    // Sanitize markdown code blocks if present
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const raw = JSON.parse(text);
 
-    return JSON.parse(text) as AnalysisResult;
+    if (raw.error) {
+      throw new Error(raw.error);
+    }
+
+    // Mapeo adaptado al nuevo formato V5 (específicamente nombres de llaves en plan)
+    return {
+      classification: raw.class,
+      riskLevel: raw.risk as RiskLevel,
+      actionPlan: raw.plan.map((p: any) => ({
+        role: p.role,
+        actions: p.actions
+      })),
+      legalBasis: raw.base.map((b: any) => ({
+        document: b.doc,
+        article: b.art,
+        description: b.desc || "Fundamento legal aplicado por el motor federal/estatal."
+      })),
+      requiredDocuments: [],
+      consideredDocuments: [raw.entidad || SELECTED_STATE],
+      canalizationBody: null,
+      disciplinaryMeasures: raw.measures || [],
+      finalAgreements: raw.agreements || []
+    } as AnalysisResult;
   } catch (error: any) {
-    console.error("AI Service Error:", error);
-    throw new Error(error.message || "Falló la conexión con el servicio de Inteligencia Artificial.");
+    console.error("DeepSeek Service Error:", error);
+    throw new Error(error.message || "Falló la conexión con el servicio de DeepSeek.");
   }
 };

@@ -12,14 +12,15 @@ export const DocumentGenerator: React.FC<Props> = ({ data, analysis }) => {
 
   // Helper to format legal docs list for text injection
   const formattedLegalList = analysis.consideredDocuments.map(d => `- ${d}`).join('\n');
-  
+
   // Helpers for new fields
   const formattedMeasures = analysis.disciplinaryMeasures?.map((m, i) => `${i + 1}.- ${m.toUpperCase()}`).join('\n') || 'PENDIENTE DE DETERMINAR POR CONSEJO TÉCNICO.';
   const formattedAgreements = analysis.finalAgreements?.map((a, i) => `${i + 1}.- ${a.toUpperCase()}`).join('\n') || '___________________________________________________________________';
 
   const getActaContent = () => {
+    const stateName = data.state.toUpperCase();
     return `
-SECRETARÍA DE EDUCACIÓN DE VERACRUZ
+SECRETARÍA DE EDUCACIÓN DE ${stateName}
 SUBSECRETARÍA DE EDUCACIÓN BÁSICA
 DIRECCIÓN GENERAL DE EDUCACIÓN [NIVEL]
 ESCUELA: ___________________________________
@@ -27,7 +28,7 @@ CLAVE: __________________ ZONA: ______ SECTOR: ______
 
 ACTA CIRCUNSTANCIADA DE HECHOS
 
-EN LA LOCALIDAD DE [CIUDAD/MUNICIPIO], ESTADO DE VERACRUZ DE IGNACIO DE LA LLAVE, SIENDO LAS ${data.time} HORAS DEL DÍA ${data.date}, REUNIDOS EN EL LOCAL QUE OCUPA LA DIRECCIÓN DE ESTE CENTRO EDUCATIVO.
+EN LA LOCALIDAD DE [CIUDAD/MUNICIPIO], ESTADO DE ${stateName}, SIENDO LAS ${data.time} HORAS DEL DÍA ${data.date}, REUNIDOS EN EL LOCAL QUE OCUPA LA DIRECCIÓN DE ESTE CENTRO EDUCATIVO.
 
 ---------------------------------- I. INTERVINIENTES ----------------------------------
 ESTANDO PRESENTES PARA DAR FE DE LOS HECHOS:
@@ -42,7 +43,7 @@ EL C. ${data.reporter.toUpperCase()}, EN SU CARÁCTER DE ${data.reporter}, HACE 
 ${data.description.toUpperCase()}
 
 --------------------------- III. FUNDAMENTACIÓN Y MOTIVACIÓN ---------------------------
-CONSIDERANDO LA NARRATIVA ANTERIOR, Y CON FUNDAMENTO EN EL ARTÍCULO 3° DE LA CONSTITUCIÓN POLÍTICA DE LOS ESTADOS UNIDOS MEXICANOS, LA LEY DE EDUCACIÓN DEL ESTADO DE VERACRUZ, LA LEY GENERAL DE LOS DERECHOS DE NNA, Y ESPECÍFICAMENTE:
+CONSIDERANDO LA NARRATIVA ANTERIOR, Y CON FUNDAMENTO EN EL ARTÍCULO 3° DE LA CONSTITUCIÓN POLÍTICA DE LOS ESTADOS UNIDOS MEXICANOS, LA LEY DE EDUCACIÓN DE ${stateName}, LA LEY GENERAL DE LOS DERECHOS DE NNA, Y ESPECÍFICAMENTE:
 
 ${formattedLegalList}
 
@@ -50,14 +51,14 @@ SE DETERMINA QUE LA CONDUCTA ENCUADRA EN LA TIPOLOGÍA: ${analysis.classificatio
 CON UN NIVEL DE RIESGO: ${analysis.riskLevel.toUpperCase()}.
 
 -------------------------- IV. MEDIDAS Y SANCIONES FORMATIVAS --------------------------
-CON BASE EN LOS ACUERDOS DE CONVIVENCIA ESCOLAR Y APLICANDO EL PRINCIPIO DE PROPORCIONALIDAD (LEY 303), SE DETERMINAN LAS SIGUIENTES MEDIDAS DISCIPLINARIAS:
+CON BASE EN LOS ACUERDOS DE CONVIVENCIA ESCOLAR Y APLICANDO EL PRINCIPIO DE PROPORCIONALIDAD, SE DETERMINAN LAS SIGUIENTES MEDIDAS DISCIPLINARIAS:
 
 ${formattedMeasures}
 
 ------------------------------ V. ACUERDOS Y COMPROMISOS ------------------------------
 PRIMERO.- SE SALVAGUARDA EN TODO MOMENTO LA INTEGRIDAD FÍSICA Y PSICOLÓGICA DE LOS MENORES INVOLUCRADOS, EVITANDO CUALQUIER TIPO DE REVICTIMIZACIÓN.
 
-SEGUNDO.- ${analysis.riskLevel === RiskLevel.ALTO ? 'SE ACTIVA EL PROTOCOLO DE CANALIZACIÓN A INSTANCIAS EXTERNAS DE MANERA INMEDIATA CONFORME AL PROTOCOLO DE LA SEV.' : 'LAS PARTES INVOLUCRADAS ASUMEN LOS SIGUIENTES COMPROMISOS ESPECÍFICOS:'}
+SEGUNDO.- ${analysis.riskLevel === RiskLevel.ALTO ? `SE ACTIVA EL PROTOCOLO DE CANALIZACIÓN A INSTANCIAS EXTERNAS DE MANERA INMEDIATA CONFORME AL PROTOCOLO DE ${stateName}.` : 'LAS PARTES INVOLUCRADAS ASUMEN LOS SIGUIENTES COMPROMISOS ESPECÍFICOS:'}
 
 ${formattedAgreements}
 
@@ -72,8 +73,9 @@ _____________________________               _____________________________
   };
 
   const getCitatorioContent = () => {
+    const stateName = data.state;
     return `
-SECRETARÍA DE EDUCACIÓN DE VERACRUZ
+SECRETARÍA DE EDUCACIÓN DE ${stateName.toUpperCase()}
 ESCUELA [NOMBRE DE LA ESCUELA]
 CLAVE: [CCT]
 
@@ -83,7 +85,7 @@ FECHA DE EMISIÓN: ${new Date().toLocaleDateString()}
 C. PADRE DE FAMILIA, MADRE O TUTOR:
 P R E S E N T E
 
-Con fundamento en el Reglamento de Asociaciones de Padres de Familia y la Ley de Educación del Estado de Veracruz, que establece la corresponsabilidad de los padres en el proceso educativo (Art. 31 Constitucional), se le solicita atentamente presentarse en la Dirección de esta escuela.
+Con fundamento en el Reglamento de Asociaciones de Padres de Familia y la Ley de Educación de ${stateName}, que establece la corresponsabilidad de los padres en el proceso educativo (Art. 31 Constitucional), se le solicita atentamente presentarse en la Dirección de esta escuela.
 
 FECHA DE CITA: _______________________
 HORA: _______________________
@@ -101,9 +103,9 @@ SELLO OFICIAL
   };
 
   const getCanalizacionContent = () => {
-    // Base template for official referral (Oficio)
+    const stateName = data.state.toUpperCase();
     return `
-SECRETARÍA DE EDUCACIÓN DE VERACRUZ
+SECRETARÍA DE EDUCACIÓN DE ${stateName}
 ESCUELA [NOMBRE DE LA ESCUELA]
 CLAVE: [CCT] | ZONA: [ZONA]
 
@@ -124,8 +126,8 @@ ${data.description}
 FUNDAMENTACIÓN JURÍDICA
 La presente solicitud obedece al cumplimiento de la obligación de notificación establecida en:
 - Ley General de los Derechos de Niñas, Niños y Adolescentes (Art. 120).
-- Ley No. 303 Contra el Acoso Escolar para el Estado de Veracruz.
-- Protocolo para la Prevención, Detección y Actuación (SEV).
+- Ley de Educación de ${data.state} (Artículos aplicables).
+- Protocolos de Convivencia Escolar de la Entidad Federativa.
 
 Por lo anterior, solicito se dicten las MEDIDAS DE PROTECCIÓN necesarias y se brinde la atención psicológica, jurídica o médica que el caso amerite.
 
@@ -158,14 +160,14 @@ c.c.p. Expediente del Alumno.
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      
+
       {/* Sidebar de Documentos Recomendados */}
       <div className="w-full lg:w-1/3 space-y-4">
         <h3 className="font-bold text-slate-800 flex items-center gap-2">
           <CheckSquare className="text-green-600" /> Documentos Oficiales
         </h3>
         <p className="text-xs text-slate-500 mb-2">Formatos alineados a la Normativa SEV</p>
-        
+
         <div className="flex flex-col gap-2">
           <button
             onClick={() => setActiveDoc('acta')}
@@ -173,14 +175,14 @@ c.c.p. Expediente del Alumno.
           >
             Acta Circunstanciada <span className="opacity-80 text-xs bg-black/10 px-2 py-0.5 rounded">Obligatorio</span>
           </button>
-          
+
           <button
             onClick={() => setActiveDoc('citatorio')}
             className={`text-left px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeDoc === 'citatorio' ? 'bg-green-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:border-green-300'}`}
           >
             Citatorio Oficial a Padres
           </button>
-          
+
           {needsCanalization && (
             <button
               onClick={() => setActiveDoc('canalizacion')}
@@ -190,7 +192,7 @@ c.c.p. Expediente del Alumno.
             </button>
           )}
         </div>
-        
+
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-xs text-blue-800 leading-relaxed">
           <strong>Aviso Legal:</strong> Estos formatos están basados en los anexos de los protocolos vigentes. Recuerde llenar los campos subrayados (____) con los datos específicos de su centro de trabajo.
         </div>
